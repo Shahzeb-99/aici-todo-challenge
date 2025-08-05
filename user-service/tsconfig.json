@@ -5,7 +5,7 @@
     "lib": ["ESNext"],
     "rootDir": "./src",
     "outDir": "./dist",
-    "types": ["node"],
+    "types": ["node","jest"],
     "esModuleInterop": true,
     "skipLibCheck": true,
     "strict": true,
@@ -14,5 +14,8 @@
     "sourceMap": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-  }
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "include": ["src", "src/migrations"]
 }
