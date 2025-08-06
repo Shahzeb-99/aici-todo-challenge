@@ -9,6 +9,11 @@
          uuid: string;
 
          /**
+          * The numeric id of the todo.
+          */
+         id: number;
+
+         /**
           * The content of the todo.
           */
          content: string;
@@ -19,6 +24,7 @@
           * @param {any} todo - The todo object containing raw todo data.
           */
          constructor(todo: any) {
+             this.id = todo.id;
              this.uuid = todo.uuid;
              this.content = todo.content;
          }

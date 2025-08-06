@@ -34,3 +34,5 @@ AppDataSource.initialize()
         console.error('Data Source initialization error:', error);
         process.exit(1);
     });
+
+export default app;
