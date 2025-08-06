@@ -1,0 +1,8 @@
+# environment variables
+.env
+
+# Ignore IntelliJ IDEA project files
+.idea/
+
+*.postman_collection.json
+
