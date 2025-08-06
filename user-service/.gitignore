@@ -3,6 +3,42 @@
 
 # build output
 /dist
+/build
+/*.tsbuildinfo
 
 # environment variables
 .env
+.env.*.local
+
+# logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# test coverage
+coverage/
+.nyc_output/
+
+# IDEs and editors
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Optional: lock files (keep if you're locking dependencies)
+# package-lock.json
+# yarn.lock
+
+# Optional: PM2 process files
+pids/
+*.pid
+*.seed
+
+# Optional: TurboRepo/monorepo
+turbo/

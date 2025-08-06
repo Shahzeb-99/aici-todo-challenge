@@ -15,7 +15,7 @@ import { Request, Response } from 'express';
 
             const canRegister = await UserPolicy.canRegister(dto.user_email);
             if (!canRegister) {
-                return res.status(400).json({ error: 'Email already exists' });
+                return res.status(401).json({ error: 'Email already exists' });
             }
 
             try {

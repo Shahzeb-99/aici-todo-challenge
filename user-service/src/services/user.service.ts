@@ -1,10 +1,18 @@
-import {AppDataSource} from '../utils/database';
-import {User} from '../models/user.model';
+import { AppDataSource } from '../utils/database';
+import { User } from '../models/user.model';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 class UserService {
-    public async registerUser( user_email: string, user_pwd: string) {
+    /**
+     * Registers a new user in the system.
+     *
+     * @param {string} user_email - The email address of the user to register.
+     * @param {string} user_pwd - The plain text password of the user to register.
+     * @throws {Error} If the email already exists in the database.
+     * @returns {Promise<User>} - The newly created user object.
+     */
+    public async registerUser(user_email: string, user_pwd: string) {
         const userRepository = AppDataSource.getRepository(User);
 
         const existingUser = await userRepository.findOne({ where: { user_email } });
@@ -19,6 +27,14 @@ class UserService {
         return user;
     }
 
+    /**
+     * Logs in a user by validating their credentials and generating a JWT.
+     *
+     * @param {string} user_email - The email address of the user attempting to log in.
+     * @param {string} user_pwd - The plain text password of the user attempting to log in.
+     * @throws {Error} If the email does not exist or the password is invalid.
+     * @returns {Promise<string>} - A JWT token for the authenticated user.
+     */
     public async loginUser(user_email: string, user_pwd: string) {
         const userRepository = AppDataSource.getRepository(User);
 

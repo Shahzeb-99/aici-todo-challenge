@@ -1,25 +1,36 @@
 import 'reflect-metadata';
-import express from 'express';
-import userRoutes from './routes/user.routes';
-import { AppDataSource } from './utils/database';
+        import express from 'express';
+        import userRoutes from './routes/user.routes';
+        import { AppDataSource } from './utils/database';
+        import dotenv from 'dotenv';
 
-const app = express();
-const port = 3000;
+        dotenv.config();
 
-app.use(express.json());
-app.use('/api/users', userRoutes);
+        const app = express();
+        const port = process.env.PORT ? Number(process.env.PORT) : 3000;
 
-app.get('/', (req, res) => {
-    res.send('Hello from TypeScript and Express!');
-});
+        app.use(express.json());
+        app.use('/', userRoutes);
 
-AppDataSource.initialize()
-    .then(() => {
-        app.listen(port, () => {
-            console.log(`Server is running at http://localhost:${port}`);
+        /**
+         * Root route of the application.
+         * Responds with a welcome message.
+         */
+        app.get('/check', (req, res) => {
+            res.send('Hello from TypeScript and Express!');
         });
-    })
-    .catch((error) => {
-        console.error('Data Source initialization error:', error);
-        process.exit(1);
-    });
+
+        /**
+         * Initializes the database connection and starts the Express server.
+         * Logs the server URL on successful startup or exits the process on failure.
+         */
+        AppDataSource.initialize()
+            .then(() => {
+                app.listen(port, () => {
+                    console.log(`Server is running at http://localhost:${port}`);
+                });
+            })
+            .catch((error) => {
+                console.error('Data Source initialization error:', error);
+                process.exit(1);
+            });
