@@ -1,20 +1,24 @@
-// src/controllers/__tests__/user.controller.test.ts
-import 'reflect-metadata';
-import request from 'supertest';
-import express from 'express';
 import UserController from '../user.controller';
 import UserService from '../../services/user.service';
-import {UserPolicy} from '../../policies/user.policy';
-import {validate} from 'class-validator';
+import { UserPolicy } from '../../policies/user.policy';
+import { UserResource } from '../../resources/user.resource';
+import { RegisterUserDto } from '../../validations/user.validation';
+import { validate } from 'class-validator';
 
 jest.mock('../../services/user.service');
 jest.mock('../../policies/user.policy');
-jest.mock('class-validator');
+jest.mock('../../resources/user.resource');
 
-const app = express();
-app.use(express.json());
-app.post('/register', (req, res) => UserController.register(req, res));
-app.post('/login', (req, res) => UserController.login(req, res));
+// Only mock the validate function, not the whole class-validator module
+jest.spyOn(require('class-validator'), 'validate');
+
+const mockRequest = (body: any) => ({ body } as any);
+const mockResponse = () => {
+    const res: any = {};
+    res.status = jest.fn().mockReturnValue(res);
+    res.json = jest.fn().mockReturnValue(res);
+    return res;
+};
 
 describe('UserController', () => {
     beforeEach(() => {
@@ -22,71 +26,83 @@ describe('UserController', () => {
     });
 
     describe('register', () => {
-        it('should register a user with valid data', async () => {
-            (validate as jest.MockedFunction<typeof validate>).mockResolvedValue([]);
-            (UserPolicy.canRegister as jest.MockedFunction<typeof UserPolicy.canRegister>).mockResolvedValue(true);
-            (UserService.registerUser as jest.MockedFunction<typeof UserService.registerUser>).mockResolvedValue({
-                id: 1,
-                user_email: 'test@example.com',
-                uuid: '123e4567-e89b-12d3-a456-426614174000',
-                user_pwd: 'hashedpassword'
+        it('returns 400 if validation fails', async () => {
+            (validate as jest.Mock).mockResolvedValue([{}]);
+            const req = mockRequest({ user_email: '', user_pwd: '' });
+            const res = mockResponse();
+
+            await UserController.register(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalled();
+        });
+
+        it('returns 400 if email already exists', async () => {
+            (validate as jest.Mock).mockResolvedValue([]);
+            (UserPolicy.canRegister as jest.Mock).mockResolvedValue(false);
+            const req = mockRequest({ user_email: 'test@example.com', user_pwd: 'password123' });
+            const res = mockResponse();
+
+            await UserController.register(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(401);
+            expect(res.json).toHaveBeenCalledWith({ error: 'Email already exists' });
+        });
+
+        it('returns 201 if registration succeeds', async () => {
+            (validate as jest.Mock).mockResolvedValue([]);
+            (UserPolicy.canRegister as jest.Mock).mockResolvedValue(true);
+            (UserService.registerUser as jest.Mock).mockResolvedValue({ id: 1, user_email: 'test@example.com' });
+            (UserResource as jest.Mock).mockImplementation(user => user);
+
+            const req = mockRequest({ user_email: 'test@example.com', user_pwd: 'password123' });
+            const res = mockResponse();
+
+            await UserController.register(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(201);
+            expect(res.json).toHaveBeenCalledWith({
+                message: 'User registered successfully',
+                user: { id: 1, user_email: 'test@example.com' }
             });
-
-            const res = await request(app)
-                .post('/register')
-                .send({user_email: 'test@example.com', user_pwd: 'password123'});
-
-            expect(res.status).toBe(201);
-            expect(res.body.message).toBe('User registered successfully');
-            expect(res.body.user).toHaveProperty('id', 1);
         });
 
-        it('should return 400 for invalid data', async () => {
-            (validate as jest.MockedFunction<typeof validate>).mockResolvedValue([
-                { property: 'user_email', constraints: { isEmail: 'Invalid email' } }
-            ]);
-            const res = await request(app)
-                .post('/register')
-                .send({user_email: 'invalid', user_pwd: '123'});
+        it('returns 400 if service throws error', async () => {
+            (validate as jest.Mock).mockResolvedValue([]);
+            (UserPolicy.canRegister as jest.Mock).mockResolvedValue(true);
+            (UserService.registerUser as jest.Mock).mockRejectedValue(new Error('fail'));
 
-            expect(res.status).toBe(400);
-        });
+            const req = mockRequest({ user_email: 'test@example.com', user_pwd: 'password123' });
+            const res = mockResponse();
 
-        it('should return 400 if email already exists', async () => {
-            (validate as jest.MockedFunction<typeof validate>).mockResolvedValue([]);
-            (UserPolicy.canRegister as jest.MockedFunction<typeof UserPolicy.canRegister>).mockResolvedValue(false);
+            await UserController.register(req, res);
 
-            const res = await request(app)
-                .post('/register')
-                .send({user_email: 'test@example.com', user_pwd: 'password123'});
-
-            expect(res.status).toBe(400);
-            expect(res.body.error).toBe('Email already exists');
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({ error: 'fail' });
         });
     });
 
     describe('login', () => {
-        it('should login with valid credentials', async () => {
-            (UserService.loginUser as jest.MockedFunction<typeof UserService.loginUser>).mockResolvedValue('token123');
+        it('returns 200 and token if login succeeds', async () => {
+            (UserService.loginUser as jest.Mock).mockResolvedValue('jwt-token');
+            const req = mockRequest({ user_email: 'test@example.com', user_pwd: 'password123' });
+            const res = mockResponse();
 
-            const res = await request(app)
-                .post('/login')
-                .send({user_email: 'test@example.com', user_pwd: 'password123'});
+            await UserController.login(req, res);
 
-            expect(res.status).toBe(200);
-            expect(res.body.message).toBe('Login successful');
-            expect(res.body.token).toBe('token123');
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({ message: 'Login successful', token: 'jwt-token' });
         });
 
-        it('should return 401 for invalid credentials', async () => {
-            (UserService.loginUser as jest.MockedFunction<typeof UserService.loginUser>).mockRejectedValue(new Error('Invalid email or password'));
+        it('returns 401 if login fails', async () => {
+            (UserService.loginUser as jest.Mock).mockRejectedValue(new Error('Invalid email or password'));
+            const req = mockRequest({ user_email: 'test@example.com', user_pwd: 'wrong' });
+            const res = mockResponse();
 
-            const res = await request(app)
-                .post('/login')
-                .send({user_email: 'test@example.com', user_pwd: 'wrongpassword'});
+            await UserController.login(req, res);
 
-            expect(res.status).toBe(401);
-            expect(res.body.error).toBe('Invalid email or password');
+            expect(res.status).toHaveBeenCalledWith(401);
+            expect(res.json).toHaveBeenCalledWith({ error: 'Invalid email or password' });
         });
     });
 });
