@@ -1,29 +1,29 @@
 import 'reflect-metadata';
 import express from 'express';
+import cors from 'cors'; // Add this import
 import todoRoutes from './routes/todo.routes';
-import {AppDataSource} from './utils/database';
+import { AppDataSource } from './utils/database';
 import dotenv from 'dotenv';
 
 dotenv.config();
-
+//Todo
 const app = express();
 const port = process.env.PORT ? Number(process.env.PORT) : 3000;
+
+// Enable CORS for your frontend origin
+app.use(cors({
+    origin: 'http://localhost:5173', // Your frontend URL
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+}));
 
 app.use(express.json());
 app.use('/', todoRoutes);
 
-/**
- * Root route of the application.
- * Responds with a welcome message.
- */
 app.get('/check', (req, res) => {
     res.send('Hello from TypeScript and Express!');
 });
 
-/**
- * Initializes the database connection and starts the Express server.
- * Logs the server URL on successful startup or exits the process on failure.
- */
 AppDataSource.initialize()
     .then(() => {
         app.listen(port, () => {
