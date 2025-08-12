@@ -1,0 +1,292 @@
+{
+  "info": {
+    "_postman_id": "75871418-e349-4708-9f51-5e0981c54f09",
+    "name": "Todo App System API Documentation",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "29829973",
+    "description": "This collection provides a complete set of requests to interact with the Todo App system, covering user authentication and todo list management. It is structured to be easy to use with Postman environments and variables."
+  },
+  "item": [
+    {
+      "name": "User Service",
+      "description": "This service handles user registration and authentication.",
+      "item": [
+        {
+          "name": "Register User",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Generate random user data",
+                  "const randomInt = Math.floor(Math.random() * 100000);",
+                  "const timestamp = Date.now();",
+                  "",
+                  "const username = `user_${randomInt}`;",
+                  "const email = `user_${timestamp}@example.com`;",
+                  "const password = `Pass@${randomInt}`;",
+                  "",
+                  "// Set values as environment variables",
+                  "pm.environment.set(\"username\", username);",
+                  "pm.environment.set(\"email\", email);",
+                  "pm.environment.set(\"password\", password);",
+                  "",
+                  "// Optional: Log for debug",
+                  "console.log(\"Generated Registration Data:\", {",
+                  "    username: username,",
+                  "    email: email,",
+                  "    password: password",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_email\": \"{{email}}\",\n  \"user_pwd\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user",
+                "register"
+              ]
+            },
+            "description": "Registers a new user with an email and password. The request body is pre-populated with variables that will be generated in the pre-request script."
+          },
+          "response": []
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Parse the JSON response",
+                  "const jsonData = pm.response.json();",
+                  "",
+                  "// Check if token exists and save it",
+                  "if (jsonData.token) {",
+                  "    pm.environment.set(\"token\", jsonData.token);",
+                  "    console.log(\"Token saved to environment:\", jsonData.token);",
+                  "} else {",
+                  "    console.warn(\"No token found in response\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_email\": \"{{email}}\",\n  \"user_pwd\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user",
+                "login"
+              ]
+            },
+            "description": "Authenticates a registered user and returns a JSON Web Token (JWT) in the response. A successful response will automatically save the JWT to the 'token' environment variable."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Todo Service",
+      "description": "This service provides CRUD endpoints for managing todo items. All requests require a JWT for authorization.",
+      "item": [
+        {
+          "name": "Create Todo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"A new todo item\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/todo/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "todo",
+                ""
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Creates a new todo item for the authenticated user. Requires a valid JWT in the Authorization header."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Todos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/todo/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "todo",
+                ""
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Retrieves all todo items belonging to the authenticated user. Requires a valid JWT in the Authorization header."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Todo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Updated todo content\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/todo/:uuid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "todo",
+                ":uuid"
+              ],
+              "variable": [
+                {
+                  "key": "uuid",
+                  "value": "ENTER_TODO_UUID_HERE"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Updates an existing todo item. The `:uuid` must be replaced with the unique identifier of the todo item to be updated. Requires a valid JWT and that the user is the owner."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Todo",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/todo/:uuid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "todo",
+                ":uuid"
+              ],
+              "variable": [
+                {
+                  "key": "uuid",
+                  "value": "ENTER_TODO_UUID_HERE"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Deletes a todo item. The `:uuid` must be replaced with the unique identifier of the todo item to be deleted. Requires a valid JWT and that the user is the owner."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "default",
+      "description": "The base URL for the API, configured to use the Nginx reverse proxy."
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "default",
+      "description": "Stores the JWT received upon successful user login."
+    }
+  ]
+}
